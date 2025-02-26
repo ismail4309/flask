@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ürün Ekle</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+    <style>
+        body {
+            background: linear-gradient(to right, #0a74da, #62b6ff); /* Mavi Arka Plan */
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            margin-top: 50px;
+            max-width: 600px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .btn {
+            border-radius: 10px;
+            width: 100%;
+        }
+        .btn i {
+            margin-right: 5px;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            transition: 0.3s;
+        }
+        .form-control {
+            border-radius: 10px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1><i class="fa-solid fa-cart-plus"></i> Yeni Ürün Ekle</h1>
+        <form action="/add_product" method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="name" class="form-label"><i class="fa-solid fa-tag"></i> Ürün Adı</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label"><i class="fa-solid fa-align-left"></i> Açıklama</label>
+                <textarea class="form-control" id="description" name="description" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="price" class="form-label"><i class="fa-solid fa-money-bill-wave"></i> Fiyat</label>
+                <input type="number" class="form-control" id="price" name="price" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="category_id" class="form-label"><i class="fa-solid fa-list"></i> Kategori</label>
+                <select class="form-select" id="category_id" name="category_id" required>
+                    <option value="" selected disabled>Kategori Seç</option>
+                    {% for category in categories %}
+                        <option value="{{ category[0] }}">{{ category[1] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label for="image_url" class="form-label"><i class="fa-solid fa-link"></i> Resim URL (Opsiyonel)</label>
+                <input type="text" class="form-control" id="image_url" name="image_url">
+                <small class="form-text text-muted">Veya resim yüklemek için aşağıdan dosya seçebilirsiniz.</small>
+            </div>
+            <div class="mb-3">
+                <label for="image" class="form-label"><i class="fa-solid fa-upload"></i> Yerel Resim Yükle</label>
+                <input type="file" class="form-control" id="image" name="image">
+            </div>
+            <button type="submit" class="btn btn-success"><i class="fa-solid fa-plus"></i> Ürünü Ekle</button>
+        </form>
+        <br>
+        <a href="/admin_dashboard" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Geri Dön</a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Müşteri Sayfası</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; }
+        .container { margin-top: 50px; }
+        
+        .category-header {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .product-card {
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+            text-align: center;
+            padding: 15px;
+            position: relative;
+    
+            z-index: 1;
+        }
+        .product-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: contain;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        /* Sepet Stili */
+        .cart-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        /* Sepet başlangıçta gizli */
+/* Sepet başlangıçta gizli */
+.cart-content {
+    display: none;
+    position: fixed;
+    right: 20px;
+    top: 60px;
+    width: 300px;
+    max-height: 400px;
+    background: white;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 10px;
+    overflow-y: auto;
+    z-index: 100000; /* Daha yüksek bir değer veriyoruz */
+}
+
+
+/* Ürünlerin olduğu alan, kaydırılabilir olacak */
+.cart-items {
+    max-height: 250px;
+    overflow-y: auto;
+    padding-bottom: 10px;
+}
+
+/* Sabit Footer (Siparişi Ver butonu hep sabit kalsın) */
+#cart-footer {
+    background: white;
+    padding: 10px;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    bottom: 0;
+    text-align: center;
+    z-index: 10000;
+}
+
+
+        .cart-dropdown:hover .cart-content { display: block; }
+        
+        .cart-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+        .cart-item img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            margin-right: 10px;
+            border-radius: 5px;
+        }
+        .cart-buttons {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .table-number {
+            margin-bottom: 10px;
+        }
+        .cart-category {
+            font-size: 12px;
+            color: gray;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Bootstrap 5 için CSS dosyası -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Navbar -->
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container-fluid">
+        <!-- LOGO (Her zaman ortada) -->
+        <a class="navbar-brand mx-auto" href="/">
+            <img src="{{ logo_url }}" alt="Restaurant Logo" style="height: 80px;">
+        </a>
+
+        <!-- MOBİLDE GÖRÜNEN SEPET -->
+        <button class="btn btn-warning position-absolute end-0 me-3" id="cart-toggle">
+            <i class="bi bi-cart"></i> <span id="cart-count">(0)</span>
+        </button>
+
+        <!-- MOBİL MENÜ BUTONU -->
+        <button class="navbar-toggler position-absolute start-0 ms-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- MOBİL MENÜ (SAĞDAN ÇEKMECE) -->
+        <div class="offcanvas offcanvas-start bg-dark text-white" id="mobileMenu">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title">Menü</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+            </div>
+            <div class="offcanvas-body text-center">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/">Ana Sayfa</a>
+                    </li>
+                    {% if 'admin_id' in session %}
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/logout">Çıkış Yap</a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/login">Admin Girişi</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- SEPET (BAŞLANGIÇTA GİZLİ, BUTONA BASINCA AÇILIR) -->
+        <div id="cartContent" class="cart-content bg-light p-3 position-absolute top-100 end-0 me-3 shadow-lg d-none" style="width: 300px;">
+            <h5 class="text-center">Sepet</h5>
+            <div class="table-number">
+                <label for="table-number">Masa No:</label>
+                <input type="number" id="table-number" class="form-control" min="1" placeholder="Masa Numarası">
+            </div>
+            <div id="cart-items" class="cart-items mt-2"></div>
+            <hr>
+            <p class="cart-total">Toplam: <span id="cart-total">0.00</span> ₺</p>
+            <button class="btn btn-warning w-100" onclick="clearCart()">Sepeti Temizle</button>
+            <button class="btn btn-success w-100 mt-2" onclick="checkout()">Siparişi Ver</button>
+        </div>
+    </div>
+</nav>
+
+<!-- Bootstrap 5 için JS dosyası -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- SEPETİN AÇILIP KAPANMASI İÇİN JAVASCRIPT -->
+<script>
+    document.getElementById("cart-toggle").addEventListener("click", function() {
+    let cart = document.getElementById("cartContent");
+    if (cart.classList.contains("d-none")) {
+        cart.classList.remove("d-none");
+    } else {
+        cart.classList.add("d-none");
+    }
+});
+
+</script>
+
+
+    <!-- Ürün Listesi -->
+    <div class="container">
+        {% for category_name, products in categorized_products.items() %}
+        <div class="category-section">
+            <h2 class="category-header">
+                <i class="bi bi-tags"></i> {{ category_name }}
+            </h2>
+            <div class="row">
+                {% for product in products %}
+                <div class="col-md-2">
+                    <div class="card mb-4 product-card">
+                        <img src="{{ product[4] }}" alt="{{ product[1] }}" class="card-img-top">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ product[1] }}</h5>
+                            <p class="card-text">{{ product[3] }} ₺</p>
+                            <div id="product-controls-{{ product[0] }}">
+                                <button class="btn btn-primary" onclick="addToCart('{{ product[0] }}', '{{ product[1] }}', '{{ product[3] }}', '{{ product[4] }}', '{{ category_name }}')">
+                                    Sepete Ekle
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        let cart = [];
+
+// Sayfa yüklendiğinde masa numarasını localStorage'den al
+window.onload = function () {
+    let savedTableNumber = localStorage.getItem("tableNumber");
+    if (savedTableNumber) {
+        document.getElementById("table-number").value = savedTableNumber;
+    }
+};
+
+function addToCart(id, name, price, image, category) {
+    let existingProduct = cart.find(item => item.id === id);
+
+    if (existingProduct) {
+        existingProduct.quantity += 1;
+    } else {
+        cart.push({ id, name, price: parseFloat(price), image, category, quantity: 1 });
+    }
+
+    updateCart();
+    updateProductControls(id, name, price, image, category);
+}
+
+function removeFromCart(id, name, price, image, category) {
+    let productIndex = cart.findIndex(item => item.id === id);
+
+    if (productIndex !== -1) {
+        let product = cart[productIndex];
+
+        if (product.quantity > 1) {
+            product.quantity -= 1;
+        } else {
+            cart.splice(productIndex, 1);
+        }
+    }
+
+    updateCart();
+    updateProductControls(id, name, price, image, category);
+}
+
+function updateProductControls(id, name, price, image, category) {
+    let productControls = document.getElementById(`product-controls-${id}`);
+    let existingProduct = cart.find(item => item.id === id);
+
+    if (existingProduct) {
+        productControls.innerHTML = `
+            <div class="cart-buttons">
+                <button class="btn btn-danger btn-sm" onclick="removeFromCart('${id}', '${name}', '${price}', '${image}', '${category}')">-</button>
+                <span>${existingProduct.quantity}</span>
+                <button class="btn btn-primary btn-sm" onclick="addToCart('${id}', '${name}', '${price}', '${image}', '${category}')">+</button>
+            </div>
+        `;
+    } else {
+        productControls.innerHTML = `
+            <button class="btn btn-primary" onclick="addToCart('${id}', '${name}', '${price}', '${image}', '${category}')">
+                Sepete Ekle
+            </button>
+        `;
+    }
+}
+
+function updateCart() {
+    const cartItems = document.getElementById("cart-items");
+    const cartCount = document.getElementById("cart-count");
+    const cartTotal = document.getElementById("cart-total");
+    cartItems.innerHTML = "";
+
+    let total = 0;
+    let totalCount = 0;
+
+    cart.forEach(item => {
+        total += item.price * item.quantity;
+        totalCount += item.quantity;
+
+        let cartItem = document.createElement("div");
+        cartItem.classList.add("cart-item");
+        cartItem.innerHTML = `
+            <img src="${item.image}" alt="${item.name}">
+            <div>
+                <p><strong>${item.name}</strong></p>
+                <p class="cart-category">${item.category}</p>
+                <p>${item.price} ₺ x ${item.quantity} = ${(item.price * item.quantity).toFixed(2)} ₺</p>
+            </div>
+        `;
+        cartItems.appendChild(cartItem);
+    });
+
+    cartCount.textContent = `(${totalCount})`;
+    cartTotal.textContent = total.toFixed(2);
+    
+    
+}
+
+// Sipariş Verme Fonksiyonu (Masa numarası korunuyor, sayfa yenileniyor)
+function checkout() {
+    let tableNumber = document.getElementById("table-number").value;
+
+    if (!tableNumber) {
+        alert("Lütfen masa numarasını girin!");
+        return;
+    }
+
+    if (cart.length === 0) {
+        alert("Sepetiniz boş!");
+        return;
+    }
+
+    fetch('/place_order', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            table_number: tableNumber,
+            cart: cart
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert("Sipariş başarıyla oluşturuldu!");
+
+            // MASA NUMARASINI SAKLA
+            let savedTableNumber = document.getElementById("table-number").value;
+
+            // SAYFAYI YENİLE
+            location.reload();
+
+            // MASA NUMARASINI GERİ YÜKLE
+            document.getElementById("table-number").value = savedTableNumber;
+        } else {
+            alert("Sipariş oluşturulurken hata oluştu: " + data.error);
+        }
+    })
+    .catch(error => console.error("Hata:", error));
+    location.reload(); // Sayfayı yenile
+}
+
+function clearCart() {
+    cart = []; // Sepeti boşalt
+    updateCart(); // Sepeti güncelle
+    location.reload(); // Sayfayı yenile
+}
+
+
+
+document.querySelector(".btn-warning").addEventListener("click", function () {
+    let cart = document.querySelector(".cart-content");
+    if (cart.style.display === "none" || cart.style.display === "") {
+        cart.style.display = "block";
+    } else {
+        cart.style.display = "none";
+    }
+});
+
+
+// Sayfa yüklendiğinde sepeti localStorage'dan al
+window.onload = function() {
+    let storedCart = localStorage.getItem("cart");
+    if (storedCart) {
+        cart = JSON.parse(storedCart);
+        updateCart();
+    }
+};
+
+// Sepeti localStorage'a kaydet
+function saveCart() {
+    localStorage.setItem("cart", JSON.stringify(cart));
+}
+
+// Sepete ürün ekle
+function addToCart(id, name, price, image, category) {
+    let existingProduct = cart.find(item => item.id === id);
+
+    if (existingProduct) {
+        existingProduct.quantity += 1;
+    } else {
+        cart.push({ id, name, price: parseFloat(price), image, category, quantity: 1 });
+    }
+
+    saveCart(); // Güncellenen sepeti kaydet
+    updateCart();
+    updateProductControls(id);
+}
+
+// Sepetten ürün çıkar
+function removeFromCart(id) {
+    let productIndex = cart.findIndex(item => item.id === id);
+
+    if (productIndex !== -1) {
+        let product = cart[productIndex];
+
+        if (product.quantity > 1) {
+            product.quantity -= 1;
+        } else {
+            cart.splice(productIndex, 1);
+        }
+
+        saveCart(); // Güncellenen sepeti kaydet
+        updateCart();
+        updateProductControls(id);
+    }
+}
+
+// Sepeti temizle ama masa numarasını koru
+function clearCart() {
+    cart = [];
+    saveCart(); // Güncellenen boş sepeti kaydet
+    updateCart();
+    location.reload(); // Sayfayı yenile
+
+
+}
+
+
+    </script>
+
+</body>
+</html>
